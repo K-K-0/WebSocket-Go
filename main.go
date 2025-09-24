@@ -30,7 +30,7 @@ func HandleWS(w http.ResponseWriter, r *http.Request) {
 	for {
 		_, msg, err := conn.ReadMessage()
 		if err != nil {
-			fmt.Println("Read Erro:", err)
+			fmt.Println("Read Error:", err)
 			break
 		}
 		fmt.Printf("Received: %s\n", msg)
