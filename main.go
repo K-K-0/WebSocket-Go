@@ -46,9 +46,9 @@ func HandleWS(w http.ResponseWriter, r *http.Request) {
 		}
 		mu.Unlock()
 	}
-	mu.Lock()
-	delete(client, conn)
-	mu.Unlock()
+	// mu.Lock()
+	// delete(client, conn)
+	// mu.Unlock()
 }
 
 func main() {
