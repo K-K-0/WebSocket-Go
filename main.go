@@ -1,58 +1,47 @@
 package main
 
 import (
-	"fmt"
+	"log"
 	"net/http"
-	"sync"
 
+	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 )
 
-var upgrader = websocket.Upgrader{
-	CheckOrigin: func(r *http.Request) bool { return true },
+var wsUpgrader = websocket.Upgrader{
+	ReadBufferSize:  1024,
+	WriteBufferSize: 1024,
+	CheckOrigin:     func(r *http.Request) bool { return true },
 }
 
-var client = make(map[*websocket.Conn]bool)
-var mu sync.Mutex
-
-func HandleWS(w http.ResponseWriter, r *http.Request) {
-	conn, err := upgrader.Upgrade(w, r, nil)
+func wsHandler(w http.ResponseWriter, r *http.Request) {
+	conn, err := wsUpgrader.Upgrade(w, r, nil)
 	if err != nil {
-		fmt.Println("Upgrader error: ", err)
+		log.Println("error while connecting", err)
 		return
 	}
+
 	defer conn.Close()
 
-	mu.Lock()
-	client[conn] = true
-	mu.Unlock()
-
 	for {
-		_, msg, err := conn.ReadMessage()
+		messageType, msg, err := conn.ReadMessage()
 		if err != nil {
-			fmt.Println("Read Error:", err)
+			log.Printf("error while reading message", err)
 			break
 		}
-		fmt.Printf("Received: %s\n", msg)
-
-		mu.Lock()
-
-		for c := range client {
-			if err := c.WriteMessage(websocket.TextMessage, msg); err != nil {
-				fmt.Print("Error while reading message")
-				c.Close()
-				delete(client, c)
-			}
+		if err := conn.WriteMessage(messageType, msg); err != nil {
+			log.Println("error while writing message", err)
+			break
 		}
-		mu.Unlock()
 	}
-	// mu.Lock()
-	// delete(client, conn)
-	// mu.Unlock()
 }
 
 func main() {
-	http.HandleFunc("/ws", HandleWS)
+	r := gin.Default()
 
-	http.ListenAndServe(":8080", nil)
+	r.GET("/ws", func(c *gin.Context) {
+		wsHandler(c.Writer, c.Request)
+	})
+
+	r.Run("localhost:8080")
 }
