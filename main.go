@@ -26,11 +26,11 @@ func wsHandler(w http.ResponseWriter, r *http.Request) {
 	for {
 		messageType, msg, err := conn.ReadMessage()
 		if err != nil {
-			log.Printf("error while reading message", err)
+			log.Println("error while reading message", err)
 			break
 		}
 		if err := conn.WriteMessage(messageType, msg); err != nil {
-			log.Println("error while writing message", err)
+			log.Println("error while writing", err)
 			break
 		}
 	}
@@ -43,5 +43,5 @@ func main() {
 		wsHandler(c.Writer, c.Request)
 	})
 
-	r.Run("localhost:8080")
+	r.Run("localhost:8000")
 }
